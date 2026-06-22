@@ -1,0 +1,62 @@
+<hazelcast xmlns="http://www.hazelcast.com/schema/config"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+                               http://www.hazelcast.com/schema/config/hazelcast-config-5.4.xsd">
+
+    <cluster-name>search-cluster</cluster-name>
+
+    <network>
+        <port auto-increment="true">5701</port>
+        <join>
+            <multicast enabled="false"/>
+            <tcp-ip enabled="true">
+                <member>hazelcast-1</member>
+                <member>hazelcast-2</member>
+                <member>hazelcast-3</member>
+            </tcp-ip>
+        </join>
+    </network>
+
+    <!--
+        Los 3 shards del índice invertido distribuido.
+        El shard al que pertenece un término se calcula como:
+            "inverted_index_" + Math.floorMod(term.hashCode(), 3)
+        Configuración:
+          - backup-count=2 → 2 réplicas síncronas (R=3 entre los tres miembros)
+          - async-backup-count=0 → no se pide una cuarta copia inexistente
+          - SET (no LIST) → evita posting duplicados si un libro se reindexa varias veces
+    -->
+
+    <!-- Shard 0 -->
+    <multimap name="inverted_index_0">
+        <value-collection-type>SET</value-collection-type>
+        <backup-count>2</backup-count>
+        <async-backup-count>0</async-backup-count>
+    </multimap>
+
+    <!-- Shard 1 -->
+    <multimap name="inverted_index_1">
+        <value-collection-type>SET</value-collection-type>
+        <backup-count>2</backup-count>
+        <async-backup-count>0</async-backup-count>
+    </multimap>
+
+    <!-- Shard 2 -->
+    <multimap name="inverted_index_2">
+        <value-collection-type>SET</value-collection-type>
+        <backup-count>2</backup-count>
+        <async-backup-count>0</async-backup-count>
+    </multimap>
+
+    <!--
+        Mapa de locks distribuidos para escrituras concurrentes desde múltiples indexers.
+        Sin eviction: los locks son de vida corta y siempre se liberan en el bloque finally.
+    -->
+    <map name="index_locks">
+        <backup-count>1</backup-count>
+        <async-backup-count>0</async-backup-count>
+        <time-to-live-seconds>30</time-to-live-seconds>
+        <eviction eviction-policy="LRU" max-size-policy="PER_NODE" size="100000"/>
+    </map>
+
+</hazelcast>
