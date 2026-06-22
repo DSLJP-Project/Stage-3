@@ -34,6 +34,7 @@ public class HazelcastIndex {
         ClientConfig clientConfig = new ClientConfig();
         String clusterName = System.getenv().getOrDefault("HZ_CLUSTER_NAME", "search-cluster");
         clientConfig.setClusterName(clusterName);
+        clientConfig.setProperty("hazelcast.discovery.public.ip.enabled", "true");
 
         // Identidad fija para evitar ambigüedad en el clúster
         clientConfig.setInstanceName("indexing-client");
@@ -45,11 +46,7 @@ public class HazelcastIndex {
         clientConfig.getNetworkConfig()
                 .setSmartRouting(false) // Deshabilitado para evitar conflictos de red
                 .setRedoOperation(true)
-                .addAddress(
-                        "hazelcast-1:5701",
-                        "hazelcast-2:5701",
-                        "hazelcast-3:5701"
-                );
+                .addAddress(hazelcastMembers());
 
         hz = HazelcastClient.newHazelcastClient(clientConfig);
         locks = hz.getMap("index_locks");
@@ -149,6 +146,12 @@ public class HazelcastIndex {
     private MultiMap<String, Integer> getShard(String term) {
         int shard = Math.floorMod(term.hashCode(), 3);
         return hz.getMultiMap("inverted_index_" + shard);
+    }
+
+    private static String[] hazelcastMembers() {
+        return System.getenv().getOrDefault("HZ_MEMBERS",
+                        "hazelcast-1:5701,hazelcast-2:5701,hazelcast-3:5701")
+                .split("\\s*,\\s*");
     }
 
     public void close() {

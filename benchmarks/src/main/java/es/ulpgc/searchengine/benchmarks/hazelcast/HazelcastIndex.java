@@ -21,7 +21,8 @@ public class HazelcastIndex {
     public HazelcastIndex() {
         ClientConfig config = new ClientConfig();
         config.setClusterName(System.getenv().getOrDefault("HZ_CLUSTER_NAME", "search-cluster"));
-        config.getNetworkConfig().addAddress("hazelcast-1:5701", "hazelcast-2:5701", "hazelcast-3:5701");
+        config.setProperty("hazelcast.discovery.public.ip.enabled", "true");
+        config.getNetworkConfig().addAddress(hazelcastMembers());
         hazelcast = HazelcastClient.newHazelcastClient(config);
     }
 
@@ -60,6 +61,12 @@ public class HazelcastIndex {
 
     private static String shardFor(String term) {
         return "inverted_index_" + Math.floorMod(term.hashCode(), 3);
+    }
+
+    private static String[] hazelcastMembers() {
+        return System.getenv().getOrDefault("HZ_MEMBERS",
+                        "hazelcast-1:5701,hazelcast-2:5701,hazelcast-3:5701")
+                .split("\\s*,\\s*");
     }
 
     public boolean isConnected() {

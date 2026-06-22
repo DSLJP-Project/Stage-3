@@ -20,12 +20,11 @@ public class HazelcastIndexClient {
 
         String clusterName = System.getenv().getOrDefault("HZ_CLUSTER_NAME", "search-cluster");
         clientConfig.setClusterName(clusterName);
+        clientConfig.setProperty("hazelcast.discovery.public.ip.enabled", "true");
 
-        clientConfig.getNetworkConfig().addAddress(
-                "hazelcast-1:5701",
-                "hazelcast-2:5701",
-                "hazelcast-3:5701"
-        );
+        clientConfig.getNetworkConfig().addAddress(System.getenv().getOrDefault("HZ_MEMBERS",
+                        "hazelcast-1:5701,hazelcast-2:5701,hazelcast-3:5701")
+                .split("\\s*,\\s*"));
 
         NearCacheConfig nearCacheConfig =
                 new NearCacheConfig("inverted_index_*")

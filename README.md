@@ -11,15 +11,14 @@ Search engine distributed across five physical laboratory PCs. It provides a rep
 - Each term maps to one of three Hazelcast `MultiMap` shards. Its values form a set, preventing duplicate postings; stale postings are removed before re-indexing a document.
 - Nginx distributes `/search` with `least_conn` and retries another backend on connection or 5xx failure.
 
-## Laboratory deployment
+## Laboratory deployment on Windows Docker Desktop
 
-Use [deploy/LAB_RUNBOOK.md](deploy/LAB_RUNBOOK.md). It contains the exact Docker Swarm commands, the fixed IP mapping, test commands, benchmark collection and the 4-7 minute video script.
+Use [deploy/windows/README.md](deploy/windows/README.md). It has one Docker Compose file per physical PC and requires no Docker Swarm, administrative privileges or an overlay network. All inter-PC connections use the fixed Ethernet IPs and published ports.
 
-The Swarm manifest is [deploy/stack.yml](deploy/stack.yml). Build the local images on every PC before deploying:
+Build the local images on every PC with PowerShell:
 
-```bash
-chmod +x deploy/build-images.sh deploy/scale-search.sh
-./deploy/build-images.sh
+```powershell
+powershell -ExecutionPolicy Bypass -File .\deploy\windows\build-images.ps1
 ```
 
 ## Reproducible measurements

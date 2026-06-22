@@ -21,11 +21,12 @@ public class HazelcastIndex {
         // Lee cluster name de variable de entorno (consistente con todos los demás servicios)
         String clusterName = System.getenv().getOrDefault("HZ_CLUSTER_NAME", "search-cluster");
         clientConfig.setClusterName(clusterName);
+        clientConfig.setProperty("hazelcast.discovery.public.ip.enabled", "true");
 
         clientConfig.getNetworkConfig()
                 .setSmartRouting(true)
                 .setRedoOperation(true)
-                .addAddress("hazelcast-1:5701", "hazelcast-2:5701", "hazelcast-3:5701");
+                .addAddress(hazelcastMembers());
 
         clientConfig.getConnectionStrategyConfig()
                 .getConnectionRetryConfig()
@@ -107,5 +108,11 @@ public class HazelcastIndex {
             System.out.println("[SearchHazelcastIndex] Shutting down Hazelcast client...");
             hz.shutdown();
         }
+    }
+
+    private static String[] hazelcastMembers() {
+        return System.getenv().getOrDefault("HZ_MEMBERS",
+                        "hazelcast-1:5701,hazelcast-2:5701,hazelcast-3:5701")
+                .split("\\s*,\\s*");
     }
 }
