@@ -1,25 +1,29 @@
 package es.ulpgc.searchengine.ingestion;
 
+import com.google.gson.Gson;
 import io.javalin.Javalin;
-import es.ulpgc.searchengine.ingestion.messaging.EventPublisher;
 
 public class IngestionApp {
+
     public static void main(String[] args) {
-        int port = 7001;
+        Gson gson = new Gson();
 
-        // URL del broker (dentro de Docker es "activemq:61616")
-        String brokerUrl = System.getenv().getOrDefault("BROKER_URL", "tcp://activemq:61616");
-        String queueName = System.getenv().getOrDefault("INGESTION_QUEUE", "document.ingested");
+        IngestionEngine engine = new IngestionEngine();
+        System.out.println("[Ingestion] datalakePath=" + engine.getDatalakePath());
+        System.out.println("[Ingestion] peers=" + engine.getPeersRaw());
+        System.out.println("[Ingestion] rf=" + engine.getReplicationFactor());
 
-        EventPublisher publisher = new EventPublisher(brokerUrl, queueName);
+        IngestionController controller = new IngestionController(engine, gson);
+
+        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "7001"));
 
         Javalin app = Javalin.create(cfg -> {
             cfg.http.defaultContentType = "application/json";
-        }).start(port);
+        });
 
-        IngestionController controller = new IngestionController(publisher);
         controller.register(app);
 
-        System.out.println("Ingestion Service running on port " + port);
+        app.start(port);
+        System.out.println("[Ingestion] started on port " + port);
     }
 }

@@ -1,85 +1,90 @@
 package es.ulpgc.searchengine.ingestion;
 
-import es.ulpgc.searchengine.ingestion.utils.DatalakeManager;
+import com.google.gson.Gson;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-import com.google.gson.Gson;
-import es.ulpgc.searchengine.ingestion.utils.Downloader;
-import es.ulpgc.searchengine.ingestion.messaging.EventPublisher;
 
-import java.nio.file.*;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class IngestionController {
-    private static final Gson gson = new Gson();
 
-    private final EventPublisher eventPublisher;
+    private final IngestionEngine engine;
+    private final Gson gson;
 
-    public IngestionController(EventPublisher eventPublisher) {
-        this.eventPublisher = eventPublisher;
+    public IngestionController(IngestionEngine engine, Gson gson) {
+        this.engine = engine;
+        this.gson = gson;
     }
 
     public void register(Javalin app) {
-        app.post("/ingest/{book_id}", this::downloadBook);
-        app.get("/ingest/status/{book_id}", this::checkStatus);
-        app.get("/ingest/list", this::listBooks);
-        app.get("/health", ctx -> ctx.status(200).result("OK"));
+        app.get("/ingest", this::ingestFromUrl);
+        app.post("/replica/ingest", this::replicaIngest);
+        app.post("/ingest/{bookId}", this::ingest);
+        app.get("/ingest/status/{bookId}", this::status);
+        app.get("/status", ctx -> ctx.result(gson.toJson(
+                Map.of("service", "ingestion", "status", "running"))));
+        app.get("/health", ctx -> ctx.status(200).result("OK"));  // <-- AÑADIDO
     }
 
-    private void downloadBook(Context ctx) {
-        try {
-            int bookId = Integer.parseInt(ctx.pathParam("book_id"));
-            String rawText = Downloader.get("https://www.gutenberg.org/files/" + bookId + "/" + bookId + "-0.txt");
-            Path bookDir = DatalakeManager.save(bookId, rawText);
-            List<String> lines = Arrays.asList(rawText.split("\n"));
-            int start = -1, end = lines.size();
-            for (int i = 0; i < lines.size(); i++) {
-                String line = lines.get(i).toLowerCase();
-                if (start == -1 && line.contains("*** start of")) start = i + 1;
-                if (line.contains("*** end of")) {
-                    end = i;
-                    break;
-                }
-            }
 
-            List<String> header = lines.subList(0, start > 0 ? start : Math.min(50, lines.size()));
-            List<String> body = (start >= 0 && end > start)
-                    ? lines.subList(start, end)
-                    : lines.subList(Math.min(50, lines.size()), lines.size());
+    private void ingest(Context ctx) {
+        String bookId = ctx.pathParam("bookId");
+        String body = ctx.body();
 
-            Files.write(bookDir.resolve("header.txt"), header);
-            Files.write(bookDir.resolve("body.txt"), body);
-            System.out.println("Book " + bookId + ": header=" + header.size() + " lines, body=" + body.size() + " lines");
+        Map<String, Object> result = engine.ingest(bookId, body);
 
-            // ---- NUEVO: publicar evento document.ingested en ActiveMQ ----
-            if (eventPublisher != null) {
-                eventPublisher.publishBookIngested(bookId);
-            }
+        ctx.status(200).result(gson.toJson(result));
+    }
 
-            ctx.status(200).result(gson.toJson(Map.of(
-                    "book_id", bookId,
-                    "status", "downloaded",
-                    "path", bookDir.toString()
-            )));
-        } catch (Exception e) {
-            ctx.status(500).result(gson.toJson(Map.of(
-                    "error", "download_failed",
-                    "message", e.getMessage()
-            )));
+    private void replicaIngest(Context ctx) {
+        ReplicaPayload payload = gson.fromJson(ctx.body(), ReplicaPayload.class);
+        if (payload == null || payload.bookId == null) {
+            ctx.status(400).result(gson.toJson(Map.of("ok", false, "error", "invalid payload")));
+            return;
+        }
+
+        boolean ok = engine.storeReplica(payload.bookId, payload.content == null ? "" : payload.content);
+
+        if (ok) {
+            ctx.status(200).result(gson.toJson(Map.of("ok", true)));
+        } else {
+            ctx.status(500).result(gson.toJson(Map.of("ok", false)));
         }
     }
 
-    private void checkStatus(Context ctx) {
-        int bookId = Integer.parseInt(ctx.pathParam("book_id"));
-        boolean exists = DatalakeManager.exists(bookId);
-        ctx.status(200).result(gson.toJson(Map.of(
-                "book_id", bookId,
-                "status", exists ? "available" : "missing"
-        )));
+    private void status(Context ctx) {
+        String bookId = ctx.pathParam("bookId");
+        Map<String, Object> result = engine.status(bookId);
+        ctx.status(200).result(gson.toJson(result));
     }
 
-    private void listBooks(Context ctx) {
-        ctx.result(gson.toJson(DatalakeManager.list()));
+    private static class ReplicaPayload {
+        String bookId;
+        String content;
     }
+
+    private void ingestFromUrl(Context ctx) {
+        String url = ctx.queryParam("url");
+        if (url == null || url.isBlank()) {
+            ctx.status(400).result(gson.toJson(Map.of("ok", false, "error", "missing url")));
+            return;
+        }
+
+        try {
+            // Descargar contenido
+            String content = new String(new java.net.URL(url).openStream().readAllBytes());
+
+            // Generar bookId único
+            String bookId = java.util.UUID.randomUUID().toString();
+
+            // Ingestar usando el motor
+            Map<String, Object> result = engine.ingest(bookId, content);
+
+            ctx.status(200).result(gson.toJson(result));
+
+        } catch (Exception e) {
+            ctx.status(500).result(gson.toJson(Map.of("ok", false, "error", e.getMessage())));
+        }
+    }
+
 }

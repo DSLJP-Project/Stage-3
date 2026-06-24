@@ -1,38 +1,38 @@
 package es.ulpgc.searchengine.indexing;
 
-import io.javalin.Javalin;
-import es.ulpgc.searchengine.indexing.repository.DatamartSQLite;
 import es.ulpgc.searchengine.indexing.messaging.IndexingEventConsumer;
+import es.ulpgc.searchengine.indexing.repository.DatamartMongo;
+import es.ulpgc.searchengine.indexing.hazelcast.HazelcastIndex;
+import io.javalin.Javalin;
 
 public class IndexingApp {
-
     public static void main(String[] args) {
+        String mongoUri = System.getenv().getOrDefault("MONGO_URI", "mongodb://mongo:27017");
+        String mongoDb = System.getenv().getOrDefault("MONGO_DB", "searchengine");
 
-        int port = 7002;
+        System.out.println("[IndexingApp] Iniciando servicio...");
 
-        // Ruta DB (docker)
-        String dbPath = System.getenv().getOrDefault("DATAMART_DB", "/app/datamart/index.db");
-        DatamartSQLite repository = new DatamartSQLite(dbPath);
-        repository.initSchema();
+        // 1. Inicializar Repositorios
+        DatamartMongo repo = new DatamartMongo(mongoUri, mongoDb, "books");
+        HazelcastIndex hz = new HazelcastIndex();
 
-        Indexer indexer = new Indexer(repository);
-        IndexingController controller = new IndexingController(indexer);
+        // 2. Iniciar el consumidor (EL CONSUMIDOR SE CONECTA A ACTIVEMQ AQUÍ)
+        IndexingEventConsumer consumer = new IndexingEventConsumer(repo, hz);
 
-        System.out.println("[IndexingApp] Iniciando JMS consumer...");
+        // 3. Iniciar el servidor web (Javalin)
+        Javalin app = Javalin.create().start(7002);
 
-        // CONSUMIDOR JMS — arranca en un hilo aparte
-        IndexingEventConsumer consumer = new IndexingEventConsumer(indexer);
-        Thread consumerThread = new Thread(consumer);
-        consumerThread.setDaemon(true);
-        consumerThread.start();
+        // 4. Registrar endpoints
+        new IndexingController(repo, hz).register(app);
 
-        // Servidor HTTP
-        Javalin app = Javalin.create(cfg -> {
-            cfg.http.defaultContentType = "application/json";
-        }).start(port);
+        System.out.println("[IndexingApp] Servicio iniciado y esperando mensajes...");
 
-        controller.register(app);
-
-        System.out.println("Indexing Service running on port " + port);
+        // 5. ¡IMPORTANTE! Mantener vivo el hilo principal
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("[IndexingApp] Cerrando servicio...");
+            consumer.close();
+            hz.close();
+            repo.close();
+        }));
     }
 }

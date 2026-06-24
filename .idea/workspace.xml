@@ -4,49 +4,87 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="16e7113a-4a3d-47e5-be7d-754df9c3927b" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkApp.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkResult.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkRunner.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/utils/HttpHelper.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/control-module/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/control-module/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/control-module/src/main/java/es/ulpgc/searchengine/control/ControlApp.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/control-module/src/main/java/es/ulpgc/searchengine/control/Controller.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/indexing-service/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/indexing-service/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/Indexer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/IndexingApp.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/IndexingController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/MetadataExtractor.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/repository/DatamartSQLite.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ingestion-service/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ingestion-service/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/IngestionApp.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/IngestionController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/model/BookData.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/DatalakeManager.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/Downloader.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/microbenchmarks/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/microbenchmarks/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/FileSystemBenchmarks.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/MicrobenchmarkApp.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/TextBenchmarks.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/search-service/Dockerfile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/search-service/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/AdvancedSearchEngine.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/LocalCli.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/SearchApp.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/SearchController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/repository/DatamartSQLite.java" afterDir="false" />
+    <list default="true" id="12ce2834-5244-4dac-8e2f-400fb62d3d89" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/engine/BenchmarkEngine.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/hazelcast/HazelcastIndex.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crawler-service/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crawler-service/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crawler-service/src/main/java/es/ulpgc/searchengine/crawler/BrokerPublisher.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crawler-service/src/main/java/es/ulpgc/searchengine/crawler/CrawlerApp.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crawler-service/src/main/java/es/ulpgc/searchengine/crawler/CrawlerController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crawler-service/src/main/java/es/ulpgc/searchengine/crawler/CrawlerService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crawler-service/src/main/java/es/ulpgc/searchengine/crawler/DatalakePartitioner.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hazelcast-node/Dockerfile" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hazelcast-node/hazelcast.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hazelcast-node/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/hazelcast/HazelcastIndex.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/messaging/ReindexRequestConsumer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/repository/DatamartMongo.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/messaging/IngestionEventProducer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/storage/DatalakeStorage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/Hashing.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/ReplicaClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/MicrobenchmarkController.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/MicrobenchmarkEngine.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/hazelcast/HazelcastIndex.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/hazelcast/HazelcastIndex.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/hazelcast/HazelcastIndexClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/messaging/SearchEventConsumer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/repository/DatamartMongo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkRunner.java" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/BenchmarkRunner.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/utils/HttpHelper.java" beforeDir="false" afterPath="$PROJECT_DIR$/benchmarks/src/main/java/es/ulpgc/searchengine/benchmarks/utils/HttpHelper.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/control-module/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/control-module/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/control-module/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/control-module/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/control-module/src/main/java/es/ulpgc/searchengine/control/ControlApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/control-module/src/main/java/es/ulpgc/searchengine/control/ControlApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/control-module/src/main/java/es/ulpgc/searchengine/control/Controller.java" beforeDir="false" afterPath="$PROJECT_DIR$/control-module/src/main/java/es/ulpgc/searchengine/control/Controller.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/datalake/20251119/15/28/46/body.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datalake/20251119/15/28/46/header.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datalake/20251119/15/28/46/raw.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datalake/20251119/15/29/60/body.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datalake/20251119/15/29/60/header.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datalake/20251119/15/29/60/raw.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datamart/index.db-shm" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/datamart/index.db-wal" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/deploy/nginx.conf" beforeDir="false" afterPath="$PROJECT_DIR$/deploy/nginx.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/indexing-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/indexing-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/Indexer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/IndexingApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/IndexingApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/IndexingController.java" beforeDir="false" afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/IndexingController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/MetadataExtractor.java" beforeDir="false" afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/MetadataExtractor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/messaging/IndexingEventConsumer.java" beforeDir="false" afterPath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/messaging/IndexingEventConsumer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/indexing-service/src/main/java/es/ulpgc/searchengine/indexing/repository/DatamartSQLite.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/IngestionApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/IngestionApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/IngestionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/IngestionController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/messaging/EventPublisher.java" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/messaging/EventPublisher.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/model/BookData.java" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/model/BookData.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/DatalakeManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/DatalakeManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/Downloader.java" beforeDir="false" afterPath="$PROJECT_DIR$/ingestion-service/src/main/java/es/ulpgc/searchengine/ingestion/utils/Downloader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microbenchmarks/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/microbenchmarks/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microbenchmarks/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/microbenchmarks/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/FileSystemBenchmarks.java" beforeDir="false" afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/FileSystemBenchmarks.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/MicrobenchmarkApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/MicrobenchmarkApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/TextBenchmarks.java" beforeDir="false" afterPath="$PROJECT_DIR$/microbenchmarks/src/main/java/es/ulpgc/searchengine/TextBenchmarks.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/search-service/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/search-service/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/search-service/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/search-service/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/AdvancedSearchEngine.java" beforeDir="false" afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/AdvancedSearchEngine.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/LocalCli.java" beforeDir="false" afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/LocalCli.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/SearchApp.java" beforeDir="false" afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/SearchApp.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/SearchController.java" beforeDir="false" afterPath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/SearchController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/search-service/src/main/java/es/ulpgc/searchengine/search/repository/DatamartSQLite.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,47 +94,50 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 2
-}]]></component>
-  <component name="ProjectId" id="35hcUafj0AzUMesyp8sq42fYul4" />
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;l-cruz&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/pauvelsu/bdtest.git&quot;,
+    &quot;accountId&quot;: &quot;a8f13eb9-c839-4d1f-9b89-cc40a0d5d59e&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="3FDhl3iwq7Csi0oo8MGeqIhrFRz" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Maven.stage-2 [clean].executor": "Run",
-    "Maven.stage-2 [package].executor": "Run",
+    "Maven.stage-3 [clean].executor": "Run",
+    "Maven.stage-3 [package].executor": "Run",
+    "Maven.stage-3 [validate].executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "main",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/judpo/OneDrive/Escritorio/Tercero/BD/Práctica/stage-3 (4)/stage-3/stage-2",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+    "last_opened_file_path": "C:/Users/lucia/Downloads/stage3_final (2)/stage3_final/stage3_final/stage3/bdtest2",
+    "nodejs_package_manager_path": "npm"
   }
 }]]></component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
-        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
-      </set>
-    </attachedChunks>
-  </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="16e7113a-4a3d-47e5-be7d-754df9c3927b" name="Changes" comment="" />
-      <created>1763565760683</created>
+      <changelist id="12ce2834-5244-4dac-8e2f-400fb62d3d89" name="Changes" comment="" />
+      <created>1781615695852</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1763565760683</updated>
-      <workItem from="1763565761810" duration="2843000" />
+      <updated>1781615695852</updated>
     </task>
     <servers />
   </component>

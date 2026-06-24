@@ -5,6 +5,10 @@
     <file url="file://$PROJECT_DIR$/benchmarks/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/control-module/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/control-module/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/crawler-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/crawler-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/hazelcast-node/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/hazelcast-node/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/indexing-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/indexing-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ingestion-service/src/main/java" charset="UTF-8" />

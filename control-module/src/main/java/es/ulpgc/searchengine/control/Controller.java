@@ -4,132 +4,195 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import com.google.gson.Gson;
 
-import java.net.http.*;
+import javax.jms.*;
+import org.apache.activemq.ActiveMQConnectionFactory;
+
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.net.URI;
 import java.time.Duration;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Controller {
+
     private static final Gson gson = new Gson();
-    private static final HttpClient client = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
+
+    private final HttpClient client = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
             .build();
 
-    private final Map<String, String> services = Map.of(
-            "ingestion", "http://ingestion-service:7001",
-            "indexing", "http://indexing-service:7002",
-            "search", "http://search-service:7003"
-    );
+    private final String ingestionUrl =
+            System.getenv().getOrDefault("INGESTION_URL",      "http://ingestion-0:7001");
+    private final String indexingUrl =
+            System.getenv().getOrDefault("INDEXING_URL",       "http://indexing-service:7002");
+    private final String searchUrl =
+            System.getenv().getOrDefault("SEARCH_URL",         "http://nginx");
+    private final String benchmarksUrl =
+            System.getenv().getOrDefault("BENCHMARKS_URL",     "http://benchmarks:7004");
+    private final String microbenchmarksUrl =
+            System.getenv().getOrDefault("MICROBENCHMARKS_URL","http://microbenchmarks:7005");
+    private final String crawlerUrl =
+            System.getenv().getOrDefault("CRAWLER_URL",        "http://crawler-0:7007");
+    private final String brokerUrl =
+            System.getenv().getOrDefault("BROKER_URL",         "tcp://activemq:61616");
+    private final String reindexTopic =
+            System.getenv().getOrDefault("REINDEX_TOPIC",      "reindex.request");
 
     public void register(Javalin app) {
+        app.get("/control/status",          this::status);
+        app.get("/control/ready",           this::ready);
+        app.get("/control/benchmark",       this::benchmark);
+        app.post("/control/crawl/{bookId}", this::crawl);
+        app.post("/control/reindex",        this::reindex);
+        app.get("/health", ctx -> ctx.status(200).result("OK"));
+    }
+
+    // ─── Estado de todos los servicios ────────────────────────────────────────
+    private void status(Context ctx) {
+        Map<String, Object> statuses = new HashMap<>();
+        statuses.put("ingestion",       ping(ingestionUrl       + "/health"));
+        statuses.put("indexing",        ping(indexingUrl        + "/health"));
+        statuses.put("search",          ping(searchUrl          + "/health"));
+        statuses.put("benchmarks",      ping(benchmarksUrl      + "/health"));
+        statuses.put("microbenchmarks", ping(microbenchmarksUrl + "/health"));
+        statuses.put("crawler",         ping(crawlerUrl         + "/health"));
+        ctx.json(statuses);
+    }
+
+    // ─── Readiness de todos los servicios ─────────────────────────────────────
+    private void ready(Context ctx) {
+        Map<String, Object> readiness = new HashMap<>();
+        readiness.put("ingestion",       ping(ingestionUrl       + "/ready"));
+        readiness.put("indexing",        ping(indexingUrl        + "/ready"));
+        readiness.put("search",          ping(searchUrl          + "/ready"));
+        readiness.put("benchmarks",      ping(benchmarksUrl      + "/ready"));
+        readiness.put("microbenchmarks", ping(microbenchmarksUrl + "/ready"));
+        readiness.put("crawler",         ping(crawlerUrl         + "/ready"));
+        ctx.json(readiness);
+    }
+
+    // ─── Benchmark coordinado ─────────────────────────────────────────────────
+    private void benchmark(Context ctx) {
+        Map<String, Object> results = new HashMap<>();
+        results.put("basic",   fetch(searchUrl + "/search?q=adventure"));
+        results.put("phrase",  fetch(searchUrl + "/search/phrase?phrase=the+end"));
+        results.put("boolean", fetch(searchUrl + "/search/advanced?q=love+AND+war"));
+        results.put("range",   fetch(searchUrl + "/search/range?q=sea&start_year=1800&end_year=1900"));
+        ctx.json(results);
+    }
+
+    // ─── Dispara el crawler para un libro ─────────────────────────────────────
+    private void crawl(Context ctx) {
+        int bookId;
         try {
-            app.get("/control/status", this::getStatus);
-            app.post("/control/run", this::runPipeline);
-            app.get("/control/run", this::runPipeline);
+            bookId = Integer.parseInt(ctx.pathParam("bookId"));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(Map.of("error", "invalid bookId"));
+            return;
+        }
+
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(crawlerUrl + "/crawl/" + bookId))
+                    .timeout(Duration.ofSeconds(60))
+                    .POST(HttpRequest.BodyPublishers.noBody())
+                    .build();
+
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            ctx.status(resp.statusCode()).result(resp.body());
+
         } catch (Exception e) {
-            System.err.println("Error registering endpoints: " + e.getMessage());
+            ctx.status(500).json(Map.of(
+                    "error",   "Crawler unreachable",
+                    "message", e.getMessage()
+            ));
         }
     }
 
-    private void getStatus(Context ctx) {
+    /**
+     * Publica un evento reindex.request en ActiveMQ.
+     *
+     * NOTA IMPORTANTE: en este proyecto, javax.jms.Connection / Session
+     * (provenientes de jakarta.jms-api + geronimo-jms_1.1_spec transitivo de
+     * activemq-client) NO implementan java.lang.AutoCloseable. Por eso NO se
+     * puede usar try-with-resources (try (Connection c = ...) {...}) — daría
+     * "Incompatible types. Found: javax.jms.Connection, required:
+     * java.lang.AutoCloseable". En su lugar se usa try/finally con close()
+     * manual, que es válido para JMS 1.1/2.x con o sin AutoCloseable.
+     */
+    private void reindex(Context ctx) {
+        Connection connection = null;
+        Session session = null;
+        MessageProducer producer = null;
+
         try {
-            Map<String, Object> status = new LinkedHashMap<>();
-            for (Map.Entry<String, String> entry : services.entrySet()) {
-                HttpRequest req = HttpRequest.newBuilder()
-                        .uri(URI.create(entry.getValue() + "/status"))
-                        .GET().build();
-                HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
-                status.put(entry.getKey(), "OK (" + res.statusCode() + ")");
-            }
-            ctx.result(gson.toJson(status));
-        } catch (Exception e) {
-            System.err.println("Error retrieving service status: " + e.getMessage());
-            ctx.status(500).result("{\"error\":\"Failed to retrieve status\"}");
-        }
-    }
+            ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
+            connection = factory.createConnection();
+            connection.start();
 
-    private void runPipeline(Context ctx) {
-        try {
-            List<Integer> books = List.of(11, 84, 98, 1342, 1661);
-            List<Map<String, Object>> report = new ArrayList<>();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-            for (int id : books) {
-                Map<String, Object> entry = new LinkedHashMap<>();
-                entry.put("book_id", id);
+            Destination topic = session.createTopic(reindexTopic);
+            producer = session.createProducer(topic);
+            producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
-                post(services.get("ingestion") + "/ingest/" + id);
-                String statusJson = get(services.get("ingestion") + "/ingest/status/" + id);
-
-                if (!statusJson.contains("\"status\":\"available\"")) {
-                    entry.put("status", "ingestion_failed");
-                    report.add(entry);
-                    continue;
-                }
-
-                post(services.get("indexing") + "/index/update/" + id);
-                entry.put("status", "indexed");
-                report.add(entry);
-            }
-
-            post(services.get("search") + "/search/refresh");
-            testAdvancedSearch();
-
-            ctx.result(gson.toJson(Map.of(
-                    "status", "Pipeline executed with advanced search",
-                    "books_processed", report.size(),
-                    "details", report
+            TextMessage msg = session.createTextMessage(gson.toJson(Map.of(
+                    "eventType", "reindex.request",
+                    "timestamp", System.currentTimeMillis()
             )));
+            producer.send(msg);
+
+            System.out.println("[Controller] reindex.request sent to topic: " + reindexTopic);
+
+            ctx.status(200).json(Map.of(
+                    "status", "reindex.request sent",
+                    "topic",  reindexTopic
+            ));
+
         } catch (Exception e) {
-            System.err.println("Error running pipeline: " + e.getMessage());
-            ctx.status(500).result("{\"error\":\"Pipeline execution failed\"}");
-        }
-    }
+            System.err.println("[Controller] Error sending reindex: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", e.getMessage()));
 
-    private void testAdvancedSearch() {
-        try {
-            String[] testQueries = {
-                    "/search?q=love",
-                    "/search/phrase?phrase=art of war",
-                    "/search/advanced?q=java AND programming",
-                    "/search/range?start_year=1800&end_year=1900&q=adventure"
-            };
-
-            for (String query : testQueries) {
-                String response = get(services.get("search") + query);
-                System.out.println("Test query: " + query + " → " +
-                        response.substring(0, Math.min(100, response.length())));
+        } finally {
+            if (producer != null) {
+                try { producer.close(); } catch (Exception ignored) {}
             }
-        } catch (Exception e) {
-            System.err.println("Error testing advanced search: " + e.getMessage());
+            if (session != null) {
+                try { session.close(); } catch (Exception ignored) {}
+            }
+            if (connection != null) {
+                try { connection.close(); } catch (Exception ignored) {}
+            }
         }
     }
 
-    private void post(String url) throws Exception {
-        HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .POST(HttpRequest.BodyPublishers.noBody())
-                .build();
-        HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
-        if (res.statusCode() < 200 || res.statusCode() >= 300)
-            throw new RuntimeException("HTTP " + res.statusCode() + " → " + res.body());
-    }
+    // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private String get(String url) throws Exception {
-        HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .GET()
-                .build();
-        HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
-        return res.body();
-    }
-
-    public static void main(String[] args) {
+    private String ping(String url) {
         try {
-            Javalin app = Javalin.create().start(8080);
-            Controller controller = new Controller();
-            controller.register(app);
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(3))
+                    .GET().build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            return resp.statusCode() == 200 ? "ok" : "error:" + resp.statusCode();
         } catch (Exception e) {
-            System.err.println("Fatal error starting controller: " + e.getMessage());
+            return "unreachable: " + e.getMessage();
+        }
+    }
+
+    private Object fetch(String url) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(10))
+                    .GET().build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            return gson.fromJson(resp.body(), Object.class);
+        } catch (Exception e) {
+            return Map.of("error", e.getMessage());
         }
     }
 }

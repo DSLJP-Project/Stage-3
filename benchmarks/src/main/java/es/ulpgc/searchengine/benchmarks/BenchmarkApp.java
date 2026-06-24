@@ -1,19 +1,51 @@
 package es.ulpgc.searchengine.benchmarks;
 
+import io.javalin.Javalin;
+import es.ulpgc.searchengine.benchmarks.repository.DatamartMongo;
+import es.ulpgc.searchengine.benchmarks.hazelcast.HazelcastIndex;
+import es.ulpgc.searchengine.benchmarks.engine.BenchmarkEngine;
+
 public class BenchmarkApp {
     public static void main(String[] args) {
+        int port = Integer.parseInt(System.getenv().getOrDefault("PORT", "7004"));
 
-        String ingestionUrl = System.getenv().getOrDefault("INGESTION_URL", "http://localhost:7001");
-        String indexingUrl  = System.getenv().getOrDefault("INDEXING_URL",  "http://localhost:7002");
-        String searchUrl    = System.getenv().getOrDefault("SEARCH_URL",    "http://localhost:7003");
+        String mongoUri = System.getenv().getOrDefault("MONGO_URI", "mongodb://mongo:27017");
+        String dbName = System.getenv().getOrDefault("MONGO_DB", "searchengine");
+        String collection = System.getenv().getOrDefault("MONGO_COLLECTION", "books");
 
+        // URLs de los servicios para el BenchmarkRunner (fases 1-4 de Stage 3)
+        String ingestionUrl = System.getenv().getOrDefault("INGESTION_URL", "http://ingestion-0:7001");
+        String indexingUrl  = System.getenv().getOrDefault("INDEXING_URL", "http://indexing-service:7002");
+        String searchUrl    = System.getenv().getOrDefault("SEARCH_URL", "http://nginx");
+
+        DatamartMongo repo = new DatamartMongo(mongoUri, dbName, collection);
+        HazelcastIndex hzIndex = new HazelcastIndex();
+        BenchmarkEngine engine = new BenchmarkEngine(repo, hzIndex);
         BenchmarkRunner runner = new BenchmarkRunner(ingestionUrl, indexingUrl, searchUrl);
 
-        try {
-            runner.runFullBenchmark();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error running benchmarks");
-        }
+        BenchmarkController controller = new BenchmarkController(engine, runner);
+
+        Javalin app = Javalin.create(cfg -> cfg.http.defaultContentType = "application/json").start(port);
+        controller.register(app);
+
+        app.get("/health", ctx -> ctx.status(200).result("OK"));
+        app.get("/ready", ctx -> {
+            boolean dbOk = repo.testConnection();
+            boolean hzOk = hzIndex.isConnected();
+            ctx.status(dbOk && hzOk ? 200 : 503)
+                    .json(java.util.Map.of("db", dbOk, "hazelcast", hzOk));
+        });
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try { hzIndex.close(); } catch (Exception ignored) {}
+            try { repo.close(); } catch (Exception ignored) {}
+            try { app.stop(); } catch (Exception ignored) {}
+        }));
+
+        System.out.println("[BenchmarkApp] Benchmark Service running on port " + port +
+                " using MongoDB " + mongoUri + "/" + dbName + "." + collection);
+        System.out.println("[BenchmarkApp] BenchmarkRunner targets: ingestion=" + ingestionUrl +
+                " indexing=" + indexingUrl + " search=" + searchUrl);
+        System.out.println("[BenchmarkApp] Run phases via: GET /benchmark/run/{baseline|scaling|load|failure|all}");
     }
 }

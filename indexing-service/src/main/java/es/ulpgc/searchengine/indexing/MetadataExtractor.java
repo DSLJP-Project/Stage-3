@@ -23,21 +23,11 @@ public class MetadataExtractor {
     public static Meta extract(Path headerFile) throws IOException {
         List<String> lines = Files.readAllLines(headerFile);
         String fullText = String.join("\n", lines);
-        System.out.println("Analyzing header for metadata extraction...");
-        System.out.println("First 10 lines:");
-        for (int i = 0; i < Math.min(10, lines.size()); i++) {
-            System.out.println("  " + i + ": " + lines.get(i));
-        }
 
         String title = extractTitle(fullText, lines);
         String author = extractAuthor(fullText, lines);
         String language = extractLanguage(fullText);
         int year = extractYear(fullText);
-        System.out.println("Extracted metadata:");
-        System.out.println("  Title: " + title);
-        System.out.println("  Author: " + author);
-        System.out.println("  Language: " + language);
-        System.out.println("  Year: " + year);
 
         return new Meta(title, author, language, year);
     }
@@ -45,22 +35,16 @@ public class MetadataExtractor {
     private static String extractTitle(String fullText, List<String> lines) {
         String[][] patterns = {
                 {"Title: (.+)", "1"},
-                {"Title\\s*: (.+)", "1"},
                 {"The Project Gutenberg eBook of (.+)", "1"},
                 {"\"(.+)\"", "1"},
                 {"^(.+?)\\n", "1"}
         };
 
         for (String[] pattern : patterns) {
-            try {
-                Matcher m = Pattern.compile(pattern[0], Pattern.MULTILINE | Pattern.CASE_INSENSITIVE).matcher(fullText);
-                if (m.find()) {
-                    String title = m.group(Integer.parseInt(pattern[1])).trim();
-                    if (isValidTitle(title)) {
-                        return cleanText(title);
-                    }
-                }
-            } catch (Exception e) {
+            Matcher m = Pattern.compile(pattern[0], Pattern.MULTILINE | Pattern.CASE_INSENSITIVE).matcher(fullText);
+            if (m.find()) {
+                String title = m.group(Integer.parseInt(pattern[1])).trim();
+                if (isValidTitle(title)) return cleanText(title);
             }
         }
 
@@ -70,8 +54,7 @@ public class MetadataExtractor {
                     !trimmed.startsWith("Author:") &&
                     !trimmed.startsWith("Language:") &&
                     !trimmed.startsWith("***") &&
-                    trimmed.length() > 5 &&
-                    trimmed.length() < 200) {
+                    trimmed.length() > 5 && trimmed.length() < 200) {
                 return cleanText(trimmed);
             }
         }
@@ -81,45 +64,32 @@ public class MetadataExtractor {
     private static String extractAuthor(String fullText, List<String> lines) {
         String[][] patterns = {
                 {"Author: (.+)", "1"},
-                {"Author\\s*: (.+)", "1"},
                 {"by (.+?)\\n", "1"},
                 {"Written by (.+)", "1"},
                 {"by (.+?)$", "1"}
         };
 
         for (String[] pattern : patterns) {
-            try {
-                Matcher m = Pattern.compile(pattern[0], Pattern.MULTILINE | Pattern.CASE_INSENSITIVE).matcher(fullText);
-                if (m.find()) {
-                    String author = m.group(Integer.parseInt(pattern[1])).trim();
-                    if (isValidAuthor(author)) {
-                        return cleanText(author);
-                    }
-                }
-            } catch (Exception e) {
+            Matcher m = Pattern.compile(pattern[0], Pattern.MULTILINE | Pattern.CASE_INSENSITIVE).matcher(fullText);
+            if (m.find()) {
+                String author = m.group(Integer.parseInt(pattern[1])).trim();
+                if (isValidAuthor(author)) return cleanText(author);
             }
         }
-
         return "Unknown";
     }
 
     private static String extractLanguage(String fullText) {
         String[] patterns = {
                 "Language: (.+)",
-                "Language\\s*: (.+)",
-                "Language:.*?([a-zA-Z]{2,})"
+                "Language\\s*: (.+)"
         };
 
         for (String pattern : patterns) {
-            try {
-                Matcher m = Pattern.compile(pattern, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE).matcher(fullText);
-                if (m.find()) {
-                    String lang = m.group(1).trim();
-                    if (!lang.isEmpty() && lang.length() <= 20) {
-                        return cleanText(lang).toLowerCase();
-                    }
-                }
-            } catch (Exception e) {
+            Matcher m = Pattern.compile(pattern, Pattern.MULTILINE | Pattern.CASE_INSENSITIVE).matcher(fullText);
+            if (m.find()) {
+                String lang = m.group(1).trim();
+                if (!lang.isEmpty() && lang.length() <= 20) return cleanText(lang).toLowerCase();
             }
         }
         return "en";
@@ -127,18 +97,9 @@ public class MetadataExtractor {
 
     private static int extractYear(String fullText) {
         Matcher m = Pattern.compile("\\b(1[0-9]{3}|20[0-2][0-9])\\b").matcher(fullText);
-        List<Integer> years = new ArrayList<>();
         while (m.find()) {
-            try {
-                int year = Integer.parseInt(m.group(1));
-                if (year >= 1000 && year <= 2024) {
-                    years.add(year);
-                }
-            } catch (Exception ignored) {}
-        }
-
-        if (!years.isEmpty()) {
-            return years.get(0);
+            int year = Integer.parseInt(m.group(1));
+            if (year >= 1000 && year <= 2025) return year;
         }
         return -1;
     }
@@ -146,27 +107,16 @@ public class MetadataExtractor {
     private static boolean isValidTitle(String title) {
         if (title == null || title.trim().isEmpty()) return false;
         String lower = title.toLowerCase();
-        return !lower.contains("gutenberg") &&
-                !lower.contains("project") &&
-                !lower.contains("ebook") &&
-                title.length() > 2 &&
-                title.length() < 200;
+        return !lower.contains("gutenberg") && !lower.contains("project") && !lower.contains("ebook");
     }
 
     private static boolean isValidAuthor(String author) {
         if (author == null || author.trim().isEmpty()) return false;
         String lower = author.toLowerCase();
-        return !lower.contains("gutenberg") &&
-                !lower.contains("project") &&
-                !lower.contains("unknown") &&
-                author.length() > 2 &&
-                author.length() < 100;
+        return !lower.contains("gutenberg") && !lower.contains("project") && !lower.contains("unknown");
     }
 
     private static String cleanText(String text) {
-        if (text == null) return "";
-        return text.replaceAll("[\\r\\n\\t]", " ")
-                .replaceAll("\\s+", " ")
-                .trim();
+        return text.replaceAll("[\\r\\n\\t]", " ").replaceAll("\\s+", " ").trim();
     }
 }

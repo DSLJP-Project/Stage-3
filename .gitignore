@@ -3,11 +3,19 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### MongoDB runtime data ###
+mongo-data/
+
+### Datalake runtime data (regenerado al ejecutar el sistema) ###
+datalake/*
+!datalake/.gitkeep
+
+### Benchmark results (regenerados al ejecutar benchmarks) ###
+results/
+benchmarks/results/
+
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr

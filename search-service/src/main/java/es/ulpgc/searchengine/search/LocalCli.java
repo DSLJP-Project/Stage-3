@@ -1,9 +1,9 @@
 package es.ulpgc.searchengine.search;
 
-import es.ulpgc.searchengine.search.repository.DatamartSQLite;
+import es.ulpgc.searchengine.search.repository.DatamartMongo;
+import es.ulpgc.searchengine.search.hazelcast.HazelcastIndexClient;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class LocalCli {
 
@@ -20,8 +20,10 @@ public class LocalCli {
         final String language;
         final Integer year;
 
-        Query(Mode mode, String term, String phrase, String booleanExpr, Integer startYear, Integer endYear,
+        Query(Mode mode, String term, String phrase, String booleanExpr,
+              Integer startYear, Integer endYear,
               String author, String language, Integer year) {
+
             this.mode = mode;
             this.term = term;
             this.phrase = phrase;
@@ -35,16 +37,18 @@ public class LocalCli {
     }
 
     public static void main(String[] args) {
-        String dbPath = System.getProperty("DATAMART_DB",
-                System.getenv().getOrDefault("DATAMART_DB", "./datamart/index.db"));
-        try { Class.forName("org.sqlite.JDBC"); } catch (ClassNotFoundException ignored) {}
 
-        DatamartSQLite repository = new DatamartSQLite(dbPath);
-        repository.initSchema();
-        AdvancedSearchEngine engine = new AdvancedSearchEngine(repository);
+        String mongoUri = System.getenv().getOrDefault("MONGO_URI", "mongodb://mongo:27017");
+        String dbName = System.getenv().getOrDefault("MONGO_DB", "searchengine");
+        String collection = System.getenv().getOrDefault("MONGO_COLLECTION", "books");
+
+        DatamartMongo repo = new DatamartMongo(mongoUri, dbName, collection);
+        HazelcastIndexClient hz = new HazelcastIndexClient();
+        AdvancedSearchEngine engine = new AdvancedSearchEngine(repo, hz);
 
         System.out.println("Local Search CLI (no HTTP)");
-        System.out.println("DB: " + dbPath);
+        System.out.println("Mongo: " + mongoUri + "/" + dbName + "." + collection);
+        System.out.println("Hazelcast: " + (hz.isConnected() ? "connected" : "not connected"));
         System.out.println("Type a query (or 'exit' to quit). Type 'help' for examples.\n");
 
         try (Scanner in = new Scanner(System.in)) {
@@ -54,20 +58,20 @@ public class LocalCli {
                 if (line == null) break;
                 line = line.trim();
                 if (line.isEmpty()) continue;
-                if (equalsIgnoreCaseAny(line, "exit", "quit")) break;
-                if (line.equalsIgnoreCase("help")) { printHelp(); continue; }
+
+                if (line.equalsIgnoreCase("exit")) break;
+                if (line.equalsIgnoreCase("help")) {
+                    printHelp();
+                    continue;
+                }
 
                 Query q = parseQuery(line);
-                try {
-                    List<Map<String, Object>> results = execute(q, engine, repository);
-                    printResults(q.mode.name().toLowerCase(), displayQuery(q), results);
-                } catch (Throwable t) {
-                    System.err.println("Error while searching:");
-                    t.printStackTrace(System.err);
-                }
+                List<Map<String,Object>> results = execute(q, engine, repo);
+                printResults(q.mode.name().toLowerCase(), displayQuery(q), results);
             }
         }
 
+        hz.close();
         System.out.println("Leaving the search interface");
     }
 
@@ -93,7 +97,8 @@ public class LocalCli {
         }
 
         String phrase = extractQuotedAfterPrefix(remaining, "phrase:");
-        if (phrase != null) return new Query(Mode.PHRASE, null, phrase, null, null, null, author, language, year);
+        if (phrase != null)
+            return new Query(Mode.PHRASE, null, phrase, null, null, null, author, language, year);
 
         Map<String,String> range = extractRange(remaining);
         if (!range.isEmpty()) {
@@ -112,25 +117,16 @@ public class LocalCli {
         return new Query(Mode.BASIC, remaining.trim(), null, null, null, null, author, language, year);
     }
 
-    private static List<Map<String, Object>> execute(Query q, AdvancedSearchEngine engine, DatamartSQLite repo) {
+    private static List<Map<String, Object>> execute(Query q, AdvancedSearchEngine engine, DatamartMongo repo) {
         switch (q.mode) {
             case PHRASE:
-                return engine.searchPhrase(q.phrase, q.author, q.language, q.year);
+                return engine.searchPhrase(q.phrase);
             case BOOLEAN:
-                return engine.booleanSearch(q.booleanExpr, q.author, q.language, q.year);
+                return engine.booleanSearch(q.booleanExpr);
             case RANGE:
-                if (q.term != null) {
-                    List<Map<String, Object>> byRange = repo.queryByYearRange(q.startYear, q.endYear);
-                    return byRange.stream()
-                            .filter(row -> !engine.search(q.term,
-                                    (String) row.get("author"),
-                                    (String) row.get("language"),
-                                    (Integer) row.get("year")).isEmpty())
-                            .collect(Collectors.toList());
-                }
-                return repo.queryByYearRange(q.startYear, q.endYear);
+                return engine.searchByYearRange(q.startYear, q.endYear, q.term);
             default:
-                return engine.search(q.term, q.author, q.language, q.year);
+                return engine.search(q.term);
         }
     }
 

@@ -31,13 +31,11 @@ public class HttpHelper {
     public static int post(String url) throws Exception {
         System.out.println("Making POST request to: " + url);
         try {
-
             HttpRequest req = HttpRequest.newBuilder()
                     .uri(URI.create(url))
-
-                    // 🔧 FIX: enviar cuerpo real para evitar 404 en Javalin/Jetty
+                    // Enviar cuerpo vacío JSON para evitar 404 en Javalin/Jetty
                     .POST(HttpRequest.BodyPublishers.ofString("{}"))
-
+                    .header("Content-Type", "application/json")
                     .build();
 
             HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());

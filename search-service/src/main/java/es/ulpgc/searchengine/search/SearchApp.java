@@ -1,26 +1,39 @@
 package es.ulpgc.searchengine.search;
 
+import es.ulpgc.searchengine.search.hazelcast.HazelcastIndex;
+import es.ulpgc.searchengine.search.messaging.SearchEventConsumer;
+import es.ulpgc.searchengine.search.repository.DatamartMongo;
 import io.javalin.Javalin;
-import es.ulpgc.searchengine.search.repository.DatamartSQLite;
 
 public class SearchApp {
-    public static void main(String[] args) {
-        int port = 7003;
-        String dbPath = System.getenv().getOrDefault("DATAMART_DB", "./datamart/index.db");
-        DatamartSQLite repository = new DatamartSQLite(dbPath);
-        repository.initSchema();
-        AdvancedSearchEngine engine = new AdvancedSearchEngine(repository);
-        SearchController controller = new SearchController(engine);
 
-        Javalin app = Javalin.create(cfg -> cfg.http.defaultContentType = "application/json").start(port);
+    public static void main(String[] args) {
+
+        String mongoUri  = System.getenv().getOrDefault("MONGO_URI",        "mongodb://mongo:27017");
+        String mongoDb   = System.getenv().getOrDefault("MONGO_DB",         "searchengine");
+        String mongoColl = System.getenv().getOrDefault("MONGO_COLLECTION", "books");
+        int    port      = Integer.parseInt(System.getenv().getOrDefault("PORT", "7003"));
+
+        DatamartMongo  datamart = new DatamartMongo(mongoUri, mongoDb, mongoColl);
+        HazelcastIndex hzIndex  = new HazelcastIndex();
+        SearchEventConsumer eventConsumer = new SearchEventConsumer(datamart, hzIndex);
+
+        Javalin app = Javalin.create(cfg ->
+                cfg.http.defaultContentType = "application/json");
+
+        SearchController controller = new SearchController(datamart, hzIndex);
         controller.register(app);
 
-        System.out.println("Advanced Search Service running on port " + port);
-        System.out.println("Available endpoints:");
-        System.out.println("GET  /search?q=term&author=name&language=lang&year=yyyy");
-        System.out.println("POST /search/advanced?q=query (supports AND/OR/NOT)");
-        System.out.println("GET  /search/phrase?phrase=exact phrase");
-        System.out.println("GET  /search/range?start_year=yyyy&end_year=yyyy&q=term");
-        System.out.println("GET  /search/stats");
+        app.start("0.0.0.0", port);
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try { eventConsumer.close(); } catch (Exception ignored) {}
+            try { hzIndex.close();      } catch (Exception ignored) {}
+            try { datamart.close();     } catch (Exception ignored) {}
+            try { app.stop();           } catch (Exception ignored) {}
+        }));
+
+        System.out.printf("[SearchApp] Search Service running on port %d | MongoDB %s/%s/%s%n",
+                port, mongoUri, mongoDb, mongoColl);
     }
 }
