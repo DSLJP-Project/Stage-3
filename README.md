@@ -2,7 +2,6 @@
 
 **Big Data · Grado en Ciencia e Ingeniería de Datos · ULPGC**
 
-**Demo:** [pendiente — YouTube link aquí]
 
 ---
 
